@@ -1,0 +1,138 @@
+<div class="board-layout">
+  <!-- ÜST NAVBAR -->
+  <header class="board-top-nav">
+    <div class="board-title-group">
+      <a routerLink="/workspaces" class="back-link"><i class="fa-solid fa-arrow-left"></i> Alanlarım</a>
+      <h1>{{ currentWorkspace?.name || 'Proje Panosu' }}</h1>
+      <p class="subtitle">Ekibinizle görevlerinizi gerçek zamanlı takip edin.</p>
+    </div>
+
+    <div class="board-top-actions">
+      <input type="text" [(ngModel)]="inviteEmail" placeholder="yigit@gmail.com" class="invite-input">
+      <button (click)="sendInvitation()" class="btn-primary-glow">
+        <i class="fa-solid fa-paper-plane"></i> Davet Et
+      </button>
+    </div>
+  </header>
+
+  <!-- KANBAN KANAL / KOLON ALANI -->
+  <div class="kanban-container">
+    <div class="kanban-column" *ngFor="let col of columns">
+      <div class="column-header">
+        <div class="col-title-area">
+          <h3>{{ col.title }}</h3>
+          <span class="task-count-badge">{{ getTasksByStatus(col.status).length }}</span>
+        </div>
+        <button class="col-options-btn"><i class="fa-solid fa-ellipsis"></i></button>
+      </div>
+
+      <!-- KARTLAR LİSTESİ -->
+      <div class="task-cards-list" (dragover)="$event.preventDefault()" (drop)="onDrop(col.status)">
+        <div class="siber-task-card" *ngFor="let task of getTasksByStatus(col.status)" draggable="true" (dragstart)="onDragStart(task)" (click)="openTaskDetail(task)">
+          <div class="task-card-top">
+            <span class="task-id">#{{ task.id.toString().slice(-3) }}</span>
+            <span class="priority-tag" [ngClass]="task.priority.toLowerCase()">{{ task.priority }}</span>
+          </div>
+          
+          <h4 class="task-title">{{ task.title }}</h4>
+          <p class="task-desc" *ngIf="task.description">{{ task.description }}</p>
+
+          <div class="task-card-footer">
+            <div class="task-meta-info">
+              <span class="task-date" *ngIf="task.dueDate"><i class="fa-regular fa-calendar"></i> {{ task.dueDate | date:'d MMM' }}</span>
+              <span class="comment-count" *ngIf="task.comments?.length > 0"><i class="fa-regular fa-comment"></i> {{ task.comments.length }}</span>
+            </div>
+            <div class="assignee-avatar" title="{{ task.assignee || 'Atanan yok' }}">
+              {{ (task.assignee || 'U').charAt(0).toUpperCase() }}
+            </div>
+          </div>
+        </div>
+
+        <!-- Kart Ekle Butonu -->
+        <button class="btn-add-card-glow" (click)="openCreateTaskModal(col.status)">
+          <i class="fa-solid fa-plus"></i> Kart Ekle
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🔍 DETAYLI GÖREV & YORUM EKLEME MODALI -->
+<div class="cyber-modal-backdrop" *ngIf="selectedTask">
+  <div class="cyber-modal-content glow-box">
+    <div class="modal-top-bar">
+      <span class="modal-tag">Görev Detayı</span>
+      <button class="close-modal-btn" (click)="closeTaskDetail()"><i class="fa-solid fa-xmark"></i></button>
+    </div>
+
+    <h2>{{ selectedTask.title }}</h2>
+    
+    <div class="modal-grid-body">
+      <!-- Sol Taraf: Açıklama ve Yorumlar -->
+      <div class="modal-main-col">
+        <div class="form-group">
+          <label>Açıklama</label>
+          <textarea [(ngModel)]="selectedTask.description" placeholder="Görev detaylarını ve açıklamasını yazın..." class="cyber-textarea"></textarea>
+        </div>
+
+        <!-- Yorumlar Bölümü -->
+        <div class="comments-section">
+          <h4><i class="fa-regular fa-comments"></i> Yorumlar ({{ selectedTask.comments?.length || 0 }})</h4>
+          
+          <div class="comment-list">
+            <div class="comment-item" *ngFor="let comment of selectedTask.comments">
+              <div class="comment-avatar">{{ comment.author.charAt(0).toUpperCase() }}</div>
+              <div class="comment-body">
+                <div class="comment-header">
+                  <strong>{{ comment.author }}</strong>
+                  <span>{{ comment.date | date:'short' }}</span>
+                </div>
+                <p>{{ comment.text }}</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="add-comment-box">
+            <input type="text" [(ngModel)]="newCommentText" placeholder="Bir yorum ekle..." class="cyber-input" (keyup.enter)="addComment()">
+            <button class="btn-primary-glow" (click)="addComment()">Gönder</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sağ Taraf: Meta Bilgiler (Tarih, Atanan, Durum, Öncelik) -->
+      <div class="modal-side-col">
+        <div class="meta-field">
+          <label><i class="fa-solid fa-user-tag"></i> Atanan Kişi</label>
+          <input type="text" [(ngModel)]="selectedTask.assignee" class="cyber-input" placeholder="Örn: yigit@gmail.com">
+        </div>
+
+        <div class="meta-field">
+          <label><i class="fa-regular fa-calendar"></i> Son Tarih (Due Date)</label>
+          <input type="date" [(ngModel)]="selectedTask.dueDate" class="cyber-input">
+        </div>
+
+        <div class="meta-field">
+          <label><i class="fa-solid fa-signal"></i> Öncelik</label>
+          <select [(ngModel)]="selectedTask.priority" class="cyber-select">
+            <option value="Low">Low</option>
+            <option value="Medium">Medium</option>
+            <option value="High">High</option>
+            <option value="Urgent">Urgent</option>
+          </select>
+        </div>
+
+        <div class="meta-field">
+          <label><i class="fa-solid fa-columns"></i> Kolon / Durum</label>
+          <select [(ngModel)]="selectedTask.status" class="cyber-select">
+            <option value="Todo">To Do</option>
+            <option value="Doing">Doing</option>
+            <option value="Done">Done</option>
+          </select>
+        </div>
+
+        <button class="btn-primary-glow full-width" (click)="saveTaskChanges()">Değişiklikleri Kaydet</button>
+        <button class="btn-danger-glow full-width" (click)="deleteTask(selectedTask.id)">Görevi Sil</button>
+      </div>
+    </div>
+  </div>
+</div>

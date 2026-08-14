@@ -1,0 +1,207 @@
+/* Google Fonts'tan Inter'i içe aktar */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap');
+
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+/* Global Font Ailesi ve Optimizasyon */
+:root {
+  --font-family: "Inter", sans-serif;
+  --text-primary: rgba(255, 255, 255, 0.92);
+  --text-secondary: rgba(255, 255, 255, 0.72);
+  --text-muted: rgba(255, 255, 255, 0.52);
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  font-family: var(--font-family) !important;
+  font-weight: 400;
+  font-size: 14px;
+  line-height: 1.6;
+  letter-spacing: 0;
+  background-color: #0B0F19;
+  color: var(--text-primary);
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.4s ease, color 0.4s ease !important;
+}
+
+/* ==========================================================
+   GLOBAL THEME VARIABLES & PALETTES
+   ========================================================== */
+:root, [data-theme="cosmic-nebula"] {
+  --bg: radial-gradient(circle at 50% 20%, #161E38 0%, #0E1324 45%, #0B0F19 80%, #070911 100%);
+  --surface: rgba(19, 26, 46, 0.8);
+  --card: rgba(27, 36, 64, 0.65);
+  --border: rgba(139, 92, 246, 0.28);
+  --primary: #8B5CF6;
+  --secondary: #3B82F6;
+  --text: #F8FAFC;
+  --muted: #94A3B8;
+  --glow: rgba(139, 92, 246, 0.65);
+  --shadow: 0 25px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  --hover-color: #8B5CF6;
+}
+
+[data-theme="midnight-galaxy"] {
+  --bg: radial-gradient(circle at 50% 20%, #0F172A 0%, #090D16 45%, #04060A 80%, #000000 100%);
+  --surface: rgba(15, 23, 42, 0.9);
+  --card: rgba(15, 23, 42, 0.75);
+  --border: rgba(59, 130, 246, 0.25);
+  --primary: #3B82F6;
+  --secondary: #0EA5E9;
+  --text: #F1F5F9;
+  --muted: #64748B;
+  --glow: rgba(59, 130, 246, 0.5);
+  --shadow: 0 25px 50px rgba(0, 0, 0, 0.6), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  --hover-color: #3B82F6;
+}
+
+[data-theme="aurora"] {
+  --bg: radial-gradient(circle at 50% 20%, #062826 0%, #031415 45%, #010809 80%, #000304 100%);
+  --surface: rgba(4, 24, 26, 0.85);
+  --card: rgba(6, 36, 38, 0.65);
+  --border: rgba(6, 182, 212, 0.35);
+  --primary: #06B6D4;
+  --secondary: #10B981;
+  --text: #ECFEFF;
+  --muted: #5EEAD4;
+  --glow: rgba(6, 182, 212, 0.65);
+  --shadow: 0 25px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --hover-color: #06B6D4;
+}
+
+[data-theme="solar-horizon"] {
+  --bg: radial-gradient(circle at 50% 20%, #3B1C0A 0%, #221004 45%, #100701 80%, #050301 100%);
+  --surface: rgba(30, 12, 4, 0.85);
+  --card: rgba(45, 20, 8, 0.65);
+  --border: rgba(249, 115, 22, 0.35);
+  --primary: #F97316;
+  --secondary: #EAB308;
+  --text: #FFF7ED;
+  --muted: #FDBA74;
+  --glow: rgba(249, 115, 22, 0.65);
+  --shadow: 0 25px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  --hover-color: #F97316;
+}
+
+/* ==========================================================
+   GLOBAL KESİN TIPOGRAFİ VE BOYUT SENKRONİZASYONU
+   ========================================================== */
+*, body, button, input, textarea, select {
+  font-family: var(--font-family) !important;
+}
+
+h1, .page-title, .brand-title, .hero-headline {
+  font-size: 24px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.15 !important;
+  color: #FFFFFF !important;
+}
+
+h2, .section-title, .card-title {
+  font-size: 16px !important;
+  font-weight: 600 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.15 !important;
+  color: #FFFFFF !important;
+}
+
+h3, .sub-card-title {
+  font-size: 14px !important;
+  font-weight: 500 !important;
+  letter-spacing: -0.02em !important;
+  line-height: 1.15 !important;
+  color: #FFFFFF !important;
+}
+
+p, span, label, div {
+  font-family: var(--font-family) !important;
+}
+
+.desc, p, .task-desc, .subtext {
+  font-size: 13px !important;
+  font-weight: 400 !important;
+  line-height: 1.6 !important;
+  color: var(--text-secondary) !important;
+}
+
+button, .ai-btn, .nav-tab, .suggestion-chip, .badge {
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  letter-spacing: 0.01em !important;
+}
+
+/* ==========================================================
+   SADECE ÇERÇEVE PARILTI SİSTEMİ
+   ========================================================== */
+.glass-card, .metric-card, .dash-card, .welcome-hero-section, .page-header-card, .task-card, .board-column, .calendar-card, .report-card {
+  background: var(--card) !important;
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid var(--border) !important;
+  border-radius: 24px;
+  box-shadow: var(--shadow);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              box-shadow 0.4s cubic-bezier(0.16, 1, 0.3, 1), 
+              border-color 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+}
+
+.glass-card:hover, .metric-card:hover, .dash-card:hover, .welcome-hero-section:hover, .page-header-card:hover, .task-card:hover, .board-column:hover, .calendar-card:hover, .report-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 30px 60px rgba(0, 0, 0, 0.7), 0 0 35px color-mix(in srgb, var(--hover-color) 45%, transparent) !important;
+  border-color: var(--hover-color) !important;
+}
+
+/* ==========================================================
+   BUTTON & NAVIGATION BLOOM HOVER EFFECTS
+   ========================================================== */
+.ai-btn, button {
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.ai-btn.primary, button.primary {
+  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  box-shadow: 0 0 25px var(--glow);
+  border: none;
+}
+
+.ai-btn.primary:hover, button.primary:hover {
+  box-shadow: 0 0 45px var(--hover-color);
+  transform: translateY(-2px) scale(1.03);
+  border-color: var(--hover-color);
+}
+
+/* ==========================================================
+   SPACE BACKGROUND & SLOW METEORS
+   ========================================================== */
+.base-gradient {
+  background: var(--bg) !important;
+}
+
+@keyframes proceduralMeteorJourney {
+  0% { transform: translate(0, 0) scaleX(0.2); opacity: 0; }
+  15% { opacity: 1; transform: translate(-300px, 300px) scaleX(1.4); }
+  70% { opacity: 0.7; transform: translate(-900px, 900px) scaleX(1); }
+  100% { opacity: 0; transform: translate(-1400px, 1400px) scaleX(0.1); }
+}
+
+.procedural-meteor {
+  position: absolute;
+  height: 2px;
+  background: linear-gradient(90deg, #FFFFFF, var(--primary), transparent);
+  box-shadow: 0 0 16px var(--glow);
+  will-change: transform, opacity;
+  opacity: 0;
+}
+
+select, option {
+  background-color: var(--surface) !important;
+  color: var(--text) !important;
+  border: 1px solid var(--border) !important;
+}

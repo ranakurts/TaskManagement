@@ -1,0 +1,24 @@
+@use '@angular/material' as mat;
+
+/* Material çekirdek stillerini dahil et */
+@include mat.core();
+
+/* Modern Angular Material M3 Karanlık Tema Tanımı */
+$ranacore-theme: mat.define-theme((
+  color: (
+    theme-type: dark,
+    primary: mat.$violet-palette,
+  )
+));
+
+/* Temayı tüm bileşenlere uygula */
+@include mat.all-component-themes($ranacore-theme);
+
+/* Genel sayfa ve Plus Jakarta Sans font ayarı */
+html, body {
+  height: 100%;
+  margin: 0;
+  font-family: 'Plus Jakarta Sans', sans-serif !important;
+  background-color: #02030A;
+  color: #ffffff;
+}

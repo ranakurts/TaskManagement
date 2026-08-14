@@ -1,0 +1,79 @@
+<div class="team-layout">
+  <!-- Üst Başlık Alanı -->
+  <div class="team-header">
+    <div>
+      <h1>Ekip Yönetimi</h1>
+      <p class="subtitle">Bu çalışma alanındaki üyeleri yönetin ve yeni takım arkadaşları davet edin.</p>
+    </div>
+    <a [routerLink]="['/board', workspaceId]" class="btn-back">
+      <i class="fa-solid fa-arrow-left"></i> Panoya Dön
+    </a>
+  </div>
+
+  <hr class="section-divider">
+
+  <!-- Yönetici Paneli: Sadece Çalışma Alanı Sahibi Görebilir -->
+  <div class="invite-section" *ngIf="isOwner">
+    <h3><i class="fa-solid fa-paper-plane"></i> Yeni Ekip Üyesi Davet Et</h3>
+    <div class="invite-form">
+      <input 
+        type="email" 
+        [(ngModel)]="inviteEmail" 
+        placeholder="Takım arkadaşınızın e-posta adresi..." 
+        class="form-input"
+      />
+      <button (click)="inviteMember()" class="btn-primary">
+        <i class="fa-solid fa-paper-plane"></i> Davet Gönder
+      </button>
+    </div>
+  </div>
+
+  <!-- Ekip Listesi -->
+  <div class="members-section">
+    <h3><i class="fa-solid fa-users"></i> Kayıtlı Üyeler ({{ members.length }})</h3>
+    
+    <div class="members-table-container">
+      <table class="members-table">
+        <thead>
+          <tr>
+            <th>Ad Soyad</th>
+            <th>E-posta</th>
+            <th>Rol</th>
+            <th>Katılma Tarihi</th>
+            <th *ngIf="isOwner" class="text-right">Aksiyon</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let member of members">
+            <td>
+              <div class="member-name-cell">
+                <div class="avatar-placeholder">
+                  {{ member.fullName ? member.fullName[0].toUpperCase() : 'U' }}
+                </div>
+                <span class="font-medium">{{ member.fullName }}</span>
+              </div>
+            </td>
+            <td>{{ member.email }}</td>
+            <td>
+              <span class="role-badge" [ngClass]="member.role.toLowerCase()">
+                {{ member.role }}
+              </span>
+            </td>
+            <td>{{ member.joinedDate | date:'dd.MM.yyyy HH:mm' }}</td>
+            <td *ngIf="isOwner" class="text-right">
+              <!-- Yönetici kendi kendini silemez -->
+              <button 
+                *ngIf="member.role !== 'Owner'" 
+                (click)="removeMember(member.userId)" 
+                class="btn-danger-sm" 
+                title="Üyeyi Çıkar"
+              >
+                <i class="fa-solid fa-user-minus"></i> Kaldır
+              </button>
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
