@@ -1,4 +1,5 @@
 ﻿using Microsoft.EntityFrameworkCore;
+using TaskManagement.Core.Text;
 using TaskManagement.Core.DTOs;
 using TaskManagement.Core.Entities;
 using TaskManagement.Core.Enums;
@@ -72,7 +73,7 @@ namespace TaskManagement.Service.Workspaces
             var invitation = new WorkspaceInvitation
             {
                 WorkspaceId = dto.WorkspaceId,
-                Email = dto.Email.ToLower().Trim(),
+                Email = TextKey.Normalize(dto.Email),
                 Token = token,
                 Status = InvitationStatus.Pending
             };
@@ -121,7 +122,7 @@ namespace TaskManagement.Service.Workspaces
 
         public async Task<List<InvitationResponseDto>> GetMyInvitationsAsync(string email)
         {
-            var normalizedEmail = email.ToLower().Trim();
+            var normalizedEmail = TextKey.Normalize(email);
             return await _context.WorkspaceInvitations
                 .Where(i => i.Email == normalizedEmail && i.Status == InvitationStatus.Pending)
                 .Include(i => i.Workspace)

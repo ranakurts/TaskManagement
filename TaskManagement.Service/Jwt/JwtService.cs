@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -20,9 +20,10 @@ namespace TaskManagement.Service.Jwt
 
         public string GenerateToken(User user)
         {
-            var jwtSettings = _configuration.GetSection("JwtSettings");
-            var secretKey = jwtSettings["Secret"] ?? "RanaCoreSuperSecretKey2026SecureTokenValidationKey!!";
-            var key = Encoding.ASCII.GetBytes(secretKey);
+            // Program.cs'teki doğrulama ile aynı ayarlar (Jwt:Key / Issuer / Audience) kullanılmalı,
+            // aksi halde üretilen token her istekte 401 alır.
+            var key = Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]!);
+            var expireMinutes = int.TryParse(_configuration["Jwt:ExpireMinutes"], out var m) ? m : 60;
 
             var claims = new[]
             {
@@ -35,7 +36,9 @@ namespace TaskManagement.Service.Jwt
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(claims),
-                Expires = DateTime.UtcNow.AddDays(7),
+                Issuer = _configuration["Jwt:Issuer"],
+                Audience = _configuration["Jwt:Audience"],
+                Expires = DateTime.UtcNow.AddMinutes(expireMinutes),
                 SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
             };
 

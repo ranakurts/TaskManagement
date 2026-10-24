@@ -1,4 +1,4 @@
-﻿using TaskManagement.Core.Enums;
+using TaskManagement.Core.Enums;
 
 namespace TaskManagement.Core.Entities;
 
@@ -10,9 +10,9 @@ public class TaskItem
 
     public string Description { get; set; } = string.Empty;
 
-    public DateTime StartDate { get; set; }
+    public DateTime? StartDate { get; set; }
 
-    public DateTime EndDate { get; set; }
+    public DateTime? EndDate { get; set; }
 
     public PriorityLevel Priority { get; set; }
 
@@ -21,6 +21,8 @@ public class TaskItem
     public DateTime CreatedDate { get; set; }
 
     public DateTime? UpdatedDate { get; set; }
+
+    public DateTime? CompletedDate { get; set; }
 
 
     public ICollection<Comment> Comments { get; set; }
@@ -41,10 +43,17 @@ public class TaskItem
 
 
 
-    // Görevin ait olduğu Workspace
-    public int WorkspaceId { get; set; }
+    // Görevin ait olduğu Workspace (eski yapı, isteğe bağlı)
+    public int? WorkspaceId { get; set; }
 
-    public Workspace Workspace { get; set; } = null!;
+    public Workspace? Workspace { get; set; }
+
+
+
+    // Görev bir takıma aitse takımın tüm üyeleri görür
+    public int? TeamId { get; set; }
+
+    public Team? Team { get; set; }
 
 
 

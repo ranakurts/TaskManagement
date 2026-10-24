@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TaskManagement.Core.Entities;
 
 namespace TaskManagement.Data.Context
@@ -18,6 +18,8 @@ namespace TaskManagement.Data.Context
         public DbSet<WorkspaceMember> WorkspaceMembers { get; set; }
         public DbSet<WorkspaceInvitation> WorkspaceInvitations { get; set; }
         public DbSet<Team> Teams { get; set; }
+        public DbSet<TeamMember> TeamMembers { get; set; }
+        public DbSet<TeamInvitation> TeamInvitations { get; set; }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -35,6 +37,31 @@ namespace TaskManagement.Data.Context
             // ============================================================
             modelBuilder.Entity<TeamMember>()
                 .HasKey(tm => new { tm.TeamId, tm.UserId });
+
+            // Mevcut veritabanındaki tablo adı korunur
+            modelBuilder.Entity<TeamMember>().ToTable("TeamMember");
+
+            // =============================
+            // TEAM INVITATION
+            // =============================
+            modelBuilder.Entity<TeamInvitation>()
+                .HasOne(i => i.Team)
+                .WithMany()
+                .HasForeignKey(i => i.TeamId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<TeamInvitation>()
+                .HasOne(i => i.InvitedBy)
+                .WithMany()
+                .HasForeignKey(i => i.InvitedByUserId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<TeamInvitation>()
+                .Property(i => i.Email)
+                .HasMaxLength(256);
+
+            modelBuilder.Entity<TeamInvitation>()
+                .HasIndex(i => new { i.Email, i.Status });
 
             // =============================
             // USER -> TEAM
@@ -71,6 +98,24 @@ namespace TaskManagement.Data.Context
                 .WithMany(w => w.Tasks)
                 .HasForeignKey(t => t.WorkspaceId)
                 .OnDelete(DeleteBehavior.Cascade);
+
+            // =============================
+            // TASK -> TEAM
+            // =============================
+            modelBuilder.Entity<TaskItem>()
+                .HasOne(t => t.Team)
+                .WithMany()
+                .HasForeignKey(t => t.TeamId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // =============================
+            // COMMENT -> USER
+            // =============================
+            modelBuilder.Entity<Comment>()
+                .HasOne(c => c.User)
+                .WithMany()
+                .HasForeignKey(c => c.UserId)
+                .OnDelete(DeleteBehavior.Restrict);
 
             // =============================
             // TASK -> USER

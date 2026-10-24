@@ -1,20 +1,30 @@
-import { HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { inject } from '@angular/core';
+import { Router } from '@angular/router';
+import { catchError, throwError } from 'rxjs';
+import { AuthService } from '../services/auth.service';
+import { API_BASE_URL } from '../api.config';
 
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
-  // Token'ı uygulamanın başından değil, isteğin atıldığı AN okuyoruz (Eski token takılı kalmaz)
-  const token = localStorage.getItem('sys_session_token');
+  const auth = inject(AuthService);
+  const router = inject(Router);
 
-  // Tarayıcının API'den gelen eski kullanıcı verilerini (304 Not Modified) getirmesini engelliyoruz
-  let headers = req.headers
-    .set('Cache-Control', 'no-cache, no-store, must-revalidate')
-    .set('Pragma', 'no-cache')
-    .set('Expires', '0');
+  // Token isteğin atıldığı anda okunur (eski token takılı kalmaz)
+  const token = auth.getToken();
+  const isApiCall = req.url.startsWith(API_BASE_URL);
 
-  // Token varsa ekle
-  if (token) {
-    headers = headers.set('Authorization', `Bearer ${token}`);
-  }
+  const authReq = token && isApiCall
+    ? req.clone({ setHeaders: { Authorization: `Bearer ${token}` } })
+    : req;
 
-  const authReq = req.clone({ headers });
-  return next(authReq);
+  return next(authReq).pipe(
+    catchError((err: HttpErrorResponse) => {
+      // Süresi dolmuş / geçersiz oturum: giriş ekranına yönlendir
+      if (err.status === 401 && isApiCall && !req.url.includes('/auth/')) {
+        auth.logout();
+        router.navigate(['/login']);
+      }
+      return throwError(() => err);
+    })
+  );
 };

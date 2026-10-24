@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { I18N } from '../i18n';
 
 export type LangType = 'tr' | 'en';
 
@@ -7,9 +8,11 @@ export type LangType = 'tr' | 'en';
   providedIn: 'root'
 })
 export class LanguageService {
-  private currentLang: LangType = (localStorage.getItem('ranacore_lang') as LangType) || 'tr';
+  private currentLang: LangType = localStorage.getItem('ranacore_lang') === 'en' ? 'en' : 'tr';
   private langSubject = new BehaviorSubject<LangType>(this.currentLang);
   lang$: Observable<LangType> = this.langSubject.asObservable();
+  // Sinyal: şablonlarda dil değişince otomatik yeniden çizim için
+  readonly lang = signal<LangType>(this.currentLang);
 
   private translations: Record<LangType, Record<string, string>> = {
     tr: {
@@ -57,7 +60,14 @@ export class LanguageService {
       'settings.appearance': 'Görünüm ve Tema',
       'settings.appDesc': 'Uygulama renk paleti ve dil tercihleri.',
       'settings.theme': 'Tema Paleti',
-      'settings.lang': 'Arayüz Dili'
+      'settings.lang': 'Arayüz Dili',
+      'settings.username': 'Kullanıcı Adı',
+      'settings.connected': 'BAĞLI',
+      'settings.save': 'Değişiklikleri Kaydet',
+      'settings.saved': '✓ Profil başarıyla kaydedildi.',
+      'settings.saveFailed': 'Profil kaydedilemedi.',
+      'settings.invalid': 'Ad, kullanıcı adı ve geçerli bir e-posta zorunludur.',
+      'settings.serverDown': 'Sunucuya ulaşılamadı.'
     },
     en: {
       'tasks.title': 'Task Management',
@@ -104,16 +114,65 @@ export class LanguageService {
       'settings.appearance': 'Appearance & Theme',
       'settings.appDesc': 'Application color palette and interface options.',
       'settings.theme': 'Theme Palette',
-      'settings.lang': 'Interface Language'
+      'settings.lang': 'Interface Language',
+      'settings.username': 'Username',
+      'settings.connected': 'CONNECTED',
+      'settings.save': 'Save Changes',
+      'settings.saved': '✓ Profile saved successfully.',
+      'settings.saveFailed': 'Profile could not be saved.',
+      'settings.invalid': 'Name, username and a valid email are required.',
+      'settings.serverDown': 'Could not reach the server.'
     }
   };
 
-  constructor() {}
+  constructor() {
+    document.documentElement.lang = this.currentLang;
+  }
 
   setLanguage(lang: LangType) {
+    if (lang !== 'tr' && lang !== 'en') return;
     this.currentLang = lang;
+    document.documentElement.lang = lang;
     localStorage.setItem('ranacore_lang', lang);
+    this.lang.set(lang);
     this.langSubject.next(lang);
+  }
+
+  get locale(): string {
+    return this.lang() === 'en' ? 'en-US' : 'tr-TR';
+  }
+
+  // Metni çevirir; {n}, {name} gibi yer tutucuları params ile doldurur
+  t(key: string, params?: Record<string, string | number>): string {
+    const lang = this.lang();
+    let text = I18N[lang][key] ?? I18N.tr[key] ?? this.translate(key);
+    if (params) {
+      for (const [k, v] of Object.entries(params)) text = text.split(`{${k}}`).join(String(v));
+    }
+    return text;
+  }
+
+  // "yyyy-MM-dd" veya ISO tarihini dile uygun biçimlendirir
+  formatDate(value: string | Date | null | undefined, opts: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short' }): string {
+    if (!value) return '';
+    const date = typeof value === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(value)
+      ? new Date(Number(value.slice(0, 4)), Number(value.slice(5, 7)) - 1, Number(value.slice(8, 10)))
+      : new Date(value);
+    return new Intl.DateTimeFormat(this.locale, opts).format(date);
+  }
+
+  // "3 dk önce" gibi göreli zaman
+  timeAgo(iso: string | null | undefined): string {
+    if (!iso) return '';
+    const diff = Math.max(0, Date.now() - new Date(iso).getTime());
+    const min = Math.floor(diff / 60000);
+    if (min < 1) return this.t('common.justNow');
+    if (min < 60) return this.t('common.minutesAgo', { n: min });
+    const hours = Math.floor(min / 60);
+    if (hours < 24) return this.t('common.hoursAgo', { n: hours });
+    const days = Math.floor(hours / 24);
+    if (days < 7) return this.t('common.daysAgo', { n: days });
+    return this.formatDate(iso, { day: 'numeric', month: 'short', year: 'numeric' });
   }
 
   getLang(): LangType {

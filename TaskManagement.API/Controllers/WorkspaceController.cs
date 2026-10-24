@@ -1,5 +1,6 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TaskManagement.API.Extensions;
 using TaskManagement.Core.DTOs;
 using TaskManagement.Core.Services;
 
@@ -23,7 +24,7 @@ public class WorkspaceController : ControllerBase
         if (!ModelState.IsValid)
             return BadRequest(ModelState);
 
-        var ownerId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var ownerId = User.GetUserId()!.Value;
         await _workspaceService.CreateWorkspaceAsync(dto, ownerId);
 
         return Ok(new { message = "Workspace created successfully." });
@@ -32,7 +33,7 @@ public class WorkspaceController : ControllerBase
     [HttpGet]
     public async Task<IActionResult> GetMyWorkspaces()
     {
-        var ownerId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var ownerId = User.GetUserId()!.Value;
         var workspaces = await _workspaceService.GetUserWorkspacesAsync(ownerId);
 
         return Ok(workspaces);
@@ -56,7 +57,7 @@ public class WorkspaceController : ControllerBase
     [HttpPost("invite")]
     public async Task<IActionResult> InviteMember(InviteMemberDto dto)
     {
-        var userId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var userId = User.GetUserId()!.Value;
         await _workspaceService.InviteMemberAsync(dto, userId);
 
         return Ok(new { message = "Member invited successfully." });
@@ -83,7 +84,7 @@ public class WorkspaceController : ControllerBase
     [HttpDelete("{workspaceId}/members/{userId}")]
     public async Task<IActionResult> RemoveMember(int workspaceId, int userId)
     {
-        var ownerId = int.Parse(User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+        var ownerId = User.GetUserId()!.Value;
         var result = await _workspaceService.RemoveMemberAsync(workspaceId, userId, ownerId);
 
         if (!result)
@@ -121,7 +122,7 @@ public class WorkspaceController : ControllerBase
     [HttpGet("my-invitations")]
     public async Task<IActionResult> GetMyInvitations()
     {
-        var email = User.FindFirst(System.Security.Claims.ClaimTypes.Email)?.Value;
+        var email = User.GetEmail();
 
         if (string.IsNullOrEmpty(email))
             return Unauthorized();

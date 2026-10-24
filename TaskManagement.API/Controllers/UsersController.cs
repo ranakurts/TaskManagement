@@ -1,8 +1,11 @@
-﻿using Microsoft.AspNetCore.Authorization;
+using TaskManagement.Core.Text;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
-using System.Security.Claims;
+using Microsoft.EntityFrameworkCore;
+using TaskManagement.API.Extensions;
 using TaskManagement.Core.DTOs;
-using TaskManagement.Data.Context; // Projende hangisi geçerliyse (Örn: TaskManagement.Data.Context veya TaskManagement.Infrastructure.Data)
+using TaskManagement.Core.Services;
+using TaskManagement.Data.Context;
 
 namespace TaskManagement.API.Controllers
 {
@@ -12,66 +15,135 @@ namespace TaskManagement.API.Controllers
     public class UsersController : ControllerBase
     {
         private readonly ApplicationDbContext _context;
+        private readonly IPasswordService _passwordService;
 
-        public UsersController(ApplicationDbContext context)
+        public UsersController(ApplicationDbContext context, IPasswordService passwordService)
         {
             _context = context;
+            _passwordService = passwordService;
         }
 
         [HttpPut("update")]
         public async Task<IActionResult> UpdateUserInfo([FromBody] UpdateUserDto dto)
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                              ?? User.FindFirst("sub")?.Value
-                              ?? User.FindFirst("id")?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            var userId = User.GetUserId();
+            if (userId == null)
             {
                 return Unauthorized(new { message = "Geçersiz oturum." });
             }
 
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users.FindAsync(userId.Value);
             if (user == null)
             {
                 return NotFound(new { message = "Kullanıcı bulunamadı." });
             }
 
-            user.FullName = dto.FullName ?? user.FullName;
-            user.Username = dto.Username ?? user.Username;
-            user.Email = dto.Email ?? user.Email;
+            if (!string.IsNullOrWhiteSpace(dto.Username))
+            {
+                var username = TextKey.Normalize(dto.Username);
+                if (await _context.Users.AnyAsync(u => u.Username == username && u.Id != user.Id))
+                {
+                    return BadRequest(new { message = "Bu kullanıcı adı zaten alınmış." });
+                }
+                user.Username = username;
+            }
 
-            _context.Users.Update(user);
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+            {
+                var email = TextKey.Normalize(dto.Email);
+                if (await _context.Users.AnyAsync(u => u.Email == email && u.Id != user.Id))
+                {
+                    return BadRequest(new { message = "Bu e-posta adresi başka bir hesapta kayıtlı." });
+                }
+                user.Email = email;
+            }
+
+            if (!string.IsNullOrWhiteSpace(dto.FullName))
+            {
+                user.FullName = dto.FullName.Trim();
+            }
+
+            if (dto.WorkspaceName != null)
+            {
+                var workspace = dto.WorkspaceName.Trim();
+                if (workspace.Length > 100)
+                {
+                    return BadRequest(new { message = "Çalışma alanı adı en fazla 100 karakter olabilir." });
+                }
+                user.WorkspaceName = workspace.Length == 0 ? null : workspace;
+            }
+
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Kullanıcı bilgileri başarıyla güncellendi." });
+            return Ok(new
+            {
+                message = "Kullanıcı bilgileri başarıyla güncellendi.",
+                user = ToDto(user)
+            });
+        }
+
+        [HttpPut("password")]
+        public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordDto dto)
+        {
+            var userId = User.GetUserId();
+            if (userId == null)
+            {
+                return Unauthorized(new { message = "Geçersiz oturum." });
+            }
+
+            var user = await _context.Users.FindAsync(userId.Value);
+            if (user == null)
+            {
+                return NotFound(new { message = "Kullanıcı bulunamadı." });
+            }
+
+            if (!_passwordService.VerifyPassword(dto.CurrentPassword, user.PasswordHash))
+            {
+                return BadRequest(new { message = "Mevcut şifre hatalı." });
+            }
+
+            if (string.IsNullOrEmpty(dto.NewPassword) || dto.NewPassword.Length < 6)
+            {
+                return BadRequest(new { message = "Yeni şifre en az 6 karakter olmalıdır." });
+            }
+
+            if (dto.NewPassword == dto.CurrentPassword)
+            {
+                return BadRequest(new { message = "Yeni şifre mevcut şifreden farklı olmalıdır." });
+            }
+
+            user.PasswordHash = _passwordService.HashPassword(dto.NewPassword);
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = "Şifren başarıyla değiştirildi." });
         }
 
         [HttpGet("me")]
         public async Task<IActionResult> GetCurrentUserInfo()
         {
-            var userIdClaim = User.FindFirst(ClaimTypes.NameIdentifier)?.Value
-                              ?? User.FindFirst("sub")?.Value
-                              ?? User.FindFirst("id")?.Value;
-
-            if (string.IsNullOrEmpty(userIdClaim) || !int.TryParse(userIdClaim, out int userId))
+            var userId = User.GetUserId();
+            if (userId == null)
             {
                 return Unauthorized(new { message = "Geçersiz oturum." });
             }
 
-            var user = await _context.Users.FindAsync(userId);
+            var user = await _context.Users.FindAsync(userId.Value);
             if (user == null)
             {
                 return NotFound(new { message = "Kullanıcı bulunamadı." });
             }
 
-            return Ok(new UserResponseDto
-            {
-                Id = user.Id,
-                Username = user.Username,
-                FullName = user.FullName,
-                Email = user.Email,
-                Avatar = !string.IsNullOrEmpty(user.FullName) ? user.FullName.Substring(0, 1).ToUpper() : "U"
-            });
+            return Ok(ToDto(user));
         }
+
+        private static UserResponseDto ToDto(Core.Entities.User user) => new()
+        {
+            Id = user.Id,
+            Username = user.Username,
+            FullName = user.FullName,
+            Email = user.Email,
+            WorkspaceName = user.WorkspaceName,
+            Avatar = !string.IsNullOrEmpty(user.FullName) ? user.FullName.Substring(0, 1).ToUpper() : "U"
+        };
     }
 }

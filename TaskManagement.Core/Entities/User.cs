@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace TaskManagement.Core.Entities
@@ -10,6 +10,8 @@ namespace TaskManagement.Core.Entities
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
+        // Ayarlar sayfasındaki "Çalışma Alanı" adı (önceden sadece tarayıcıda tutuluyordu)
+        public string? WorkspaceName { get; set; }
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow;
 
         // ApplicationDbContext'in Fluent API ile bağladığı tüm property'ler:

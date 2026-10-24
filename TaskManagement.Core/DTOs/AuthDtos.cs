@@ -1,4 +1,4 @@
-﻿namespace TaskManagement.Core.DTOs
+namespace TaskManagement.Core.DTOs
 {
     public class RegisterDto
     {
@@ -21,5 +21,6 @@
         public string FullName { get; set; } = string.Empty;
         public string Email { get; set; } = string.Empty;
         public string Avatar { get; set; } = string.Empty;
+        public string? WorkspaceName { get; set; }
     }
 }

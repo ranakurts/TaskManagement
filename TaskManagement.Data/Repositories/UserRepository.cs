@@ -1,4 +1,4 @@
-﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using TaskManagement.Core.Entities;
 using TaskManagement.Core.Interfaces;
 using TaskManagement.Data.Context;
@@ -17,6 +17,11 @@ public class UserRepository : IUserRepository
     public async Task<User?> GetByEmailAsync(string email)
     {
         return await _context.Users.FirstOrDefaultAsync(x => x.Email == email);
+    }
+
+    public async Task<User?> GetByUsernameAsync(string username)
+    {
+        return await _context.Users.FirstOrDefaultAsync(x => x.Username == username);
     }
 
     public async Task AddAsync(User user)

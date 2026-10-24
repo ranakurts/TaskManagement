@@ -70,8 +70,8 @@ public class TaskService : ITaskService
 
             Title = task.Title,
             Description = task.Description,
-            StartDate = task.StartDate,
-            EndDate = task.EndDate,
+            StartDate = task.StartDate ?? default,
+            EndDate = task.EndDate ?? default,
             Priority = task.Priority,
             Status = task.Status
 
@@ -94,9 +94,9 @@ public class TaskService : ITaskService
 
             Description = task.Description,
 
-            StartDate = task.StartDate,
+            StartDate = task.StartDate ?? default,
 
-            EndDate = task.EndDate,
+            EndDate = task.EndDate ?? default,
 
             Priority = task.Priority,
 

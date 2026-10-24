@@ -1,14 +1,16 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
-import { BehaviorSubject, Observable } from 'rxjs';
+import { HttpClient } from '@angular/common/http';
+import { BehaviorSubject, Observable, tap } from 'rxjs';
+import { API_BASE_URL } from '../api.config';
+import { AuthService } from './auth.service';
 
-// 1. AuthenticatedUser arayüzünü buraya ekleyip export ediyoruz
 export interface AuthenticatedUser {
   id: number;
   username: string;
   fullName: string;
   email: string;
   avatar: string;
+  workspaceName?: string | null;
 }
 
 @Injectable({
@@ -16,48 +18,39 @@ export interface AuthenticatedUser {
 })
 export class UserStateService {
   private http = inject(HttpClient);
+  private auth = inject(AuthService);
 
   private currentUserSubject = new BehaviorSubject<AuthenticatedUser | null>(null);
   public currentUser$: Observable<AuthenticatedUser | null> = this.currentUserSubject.asObservable();
 
   fetchCurrentUser(): void {
-    const token = localStorage.getItem('Token') || sessionStorage.getItem('Token');
-    if (!token) {
-      this.clearAllStates();
+    if (!this.auth.isLoggedIn()) {
+      this.currentUserSubject.next(null);
       return;
     }
 
-    const headers = new HttpHeaders({ 'Authorization': `Bearer ${token}` });
-
-    this.http.get<AuthenticatedUser>('/api/users/me', { headers }).subscribe({
-      next: (user) => {
-        this.currentUserSubject.next(user);
-      },
-      error: () => {
-        this.clearAllStates();
-      }
+    this.http.get<AuthenticatedUser>(`${API_BASE_URL}/users/me`).subscribe({
+      next: user => this.currentUserSubject.next(user),
+      error: () => this.currentUserSubject.next(null)
     });
   }
 
-  // 2. layout.ts'in çağırdığı clearUser metodunu ekliyoruz
-  clearUser(): void {
-    this.clearAllStates();
+  updateProfile(data: { fullName?: string; username?: string; email?: string; workspaceName?: string }) {
+    return this.http
+      .put<{ message: string; user: AuthenticatedUser }>(`${API_BASE_URL}/users/update`, data)
+      .pipe(tap(res => {
+        this.currentUserSubject.next(res.user);
+        this.auth.updateSessionEmail(res.user.email);
+      }));
   }
 
-  clearAllStates(): void {
-    localStorage.removeItem('Token');
-    sessionStorage.removeItem('Token');
-    localStorage.clear();
-    sessionStorage.clear();
+  changePassword(currentPassword: string, newPassword: string) {
+    return this.http.put<{ message: string }>(`${API_BASE_URL}/users/password`, { currentPassword, newPassword });
+  }
+
+  // Sadece oturumu kapatır; dil, tema ve kullanıcıya ait yerel veriler silinmez.
+  clearUser(): void {
+    this.auth.logout();
     this.currentUserSubject.next(null);
   }
-  // UserService içerisine bu metodun eklenmesi gerekiyor:
-
-updateProfile(updatedData: Partial<AuthenticatedUser>) {
-  const current = this.currentUserSubject.value;
-  if (current) {
-    const updated = { ...current, ...updatedData };
-    this.currentUserSubject.next(updated);
-  }
-}
 }

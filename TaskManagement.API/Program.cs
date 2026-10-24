@@ -5,7 +5,6 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
-using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using System.Text.Json.Serialization;
 using TaskManagement.API.Validators;
@@ -18,9 +17,13 @@ using TaskManagement.Service.Mail;
 using TaskManagement.Service.Security;
 using TaskManagement.Service.Tasks;
 
-JwtSecurityTokenHandler.DefaultMapInboundClaims = false;
-
 var builder = WebApplication.CreateBuilder(args);
+
+var jwtKey = builder.Configuration["Jwt:Key"];
+if (string.IsNullOrWhiteSpace(jwtKey) || Encoding.UTF8.GetByteCount(jwtKey) < 32)
+{
+    throw new InvalidOperationException("appsettings.json içindeki Jwt:Key en az 32 karakter olmalıdır.");
+}
 
 builder.Services.AddScoped<IMailService, MailService>();
 
@@ -29,6 +32,8 @@ builder.Services.AddControllers()
     .AddJsonOptions(options =>
     {
         options.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+        // Durum/öncelik gibi enum'lar arayüze "inProgress", "high" gibi metin olarak gider
+        options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(System.Text.Json.JsonNamingPolicy.CamelCase));
     });
 
 // ===================== CORS =====================
@@ -73,6 +78,8 @@ builder.Services.AddAuthentication(options =>
 {
     options.RequireHttpsMetadata = false;
     options.SaveToken = true;
+    // ClaimTypes.NameIdentifier / ClaimTypes.Email ile okunabilmesi için claim eşlemesi açık kalmalı
+    options.MapInboundClaims = true;
 
     options.TokenValidationParameters = new TokenValidationParameters
     {
@@ -83,7 +90,7 @@ builder.Services.AddAuthentication(options =>
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(
-            Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"]!)),
+            Encoding.UTF8.GetBytes(jwtKey)),
         ClockSkew = TimeSpan.Zero
     };
 });
@@ -126,6 +133,12 @@ builder.Services.AddSwaggerGen(options =>
 });
 
 var app = builder.Build();
+
+// Bekleyen migration'ları (ör. takım davetleri tablosu) uygulama açılırken veritabanına uygula
+using (var scope = app.Services.CreateScope())
+{
+    scope.ServiceProvider.GetRequiredService<ApplicationDbContext>().Database.Migrate();
+}
 
 if (app.Environment.IsDevelopment())
 {

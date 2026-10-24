@@ -1,44 +1,31 @@
 import { Routes } from '@angular/router';
+import { authGuard, guestGuard } from './guards/auth.guard';
 
 export const routes: Routes = [
   {
     path: '',
-    loadComponent: () => import('./components/layout/layout').then((m: any) => m.LayoutComponent),
+    canActivate: [authGuard],
+    loadComponent: () => import('./components/layout/layout').then(m => m.LayoutComponent),
     children: [
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
-      { 
-        path: 'dashboard', 
-        loadComponent: () => import('./pages/dashboard/dashboard').then((m: any) => m.DashboardComponent || m.Dashboard || m.default) 
-      },
-      { 
-        path: 'tasks', 
-        loadComponent: () => import('./pages/tasks/tasks').then((m: any) => m.TasksComponent || m.Tasks || m.default) 
-      },
-      { 
-        path: 'board', 
-        loadComponent: () => import('./pages/board/board').then((m: any) => m.BoardComponent || m.Board || m.default) 
-      },
-      { 
-        path: 'calendar', 
-        loadComponent: () => import('./pages/calendar/calendar').then((m: any) => m.CalendarComponent || m.Calendar || m.default) 
-      },
-      { 
-        path: 'reports', 
-        loadComponent: () => import('./pages/reports/reports').then((m: any) => m.ReportsComponent || m.Reports || m.default) 
-      },
-      { 
-        path: 'settings', 
-        loadComponent: () => import('./pages/settings/settings').then((m: any) => m.SettingsComponent || m.Settings || m.default) 
-      }
+      { path: 'dashboard', loadComponent: () => import('./pages/dashboard/dashboard').then(m => m.DashboardComponent) },
+      { path: 'tasks', loadComponent: () => import('./pages/tasks/tasks').then(m => m.TasksComponent) },
+      { path: 'board', loadComponent: () => import('./pages/board/board').then(m => m.BoardComponent) },
+      { path: 'calendar', loadComponent: () => import('./pages/calendar/calendar').then(m => m.CalendarComponent) },
+      { path: 'reports', loadComponent: () => import('./pages/reports/reports').then(m => m.ReportsComponent) },
+      { path: 'team', loadComponent: () => import('./pages/team/team').then(m => m.TeamComponent) },
+      { path: 'settings', loadComponent: () => import('./pages/settings/settings').then(m => m.SettingsComponent) }
     ]
   },
-  { 
-    path: 'login', 
-    loadComponent: () => import('./pages/login/login').then((m: any) => m.LoginComponent || m.Login || m.default) 
+  {
+    path: 'login',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./pages/login/login').then(m => m.LoginComponent)
   },
-  { 
-    path: 'register', 
-    loadComponent: () => import('./pages/register/register').then((m: any) => m.RegisterComponent || m.Register || m.default) 
+  {
+    path: 'register',
+    canActivate: [guestGuard],
+    loadComponent: () => import('./pages/register/register').then(m => m.RegisterComponent)
   },
   { path: '**', redirectTo: 'dashboard' }
 ];

@@ -1,4 +1,4 @@
-﻿using System.Threading.Tasks;
+using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TaskManagement.Core.DTOs;
@@ -26,18 +26,23 @@ namespace TaskManagement.API.Controllers
                 return BadRequest(new { message = "Kullanıcı adı, e-posta ve şifre zorunludur." });
             }
 
-            var (success, message) = await _authService.RegisterAsync(dto);
+            var (success, message, token) = await _authService.RegisterAsync(dto);
             if (!success)
             {
                 return BadRequest(new { message });
             }
 
-            return Ok(new { message });
+            return Ok(new { message, token });
         }
 
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginDto dto)
         {
+            if (string.IsNullOrWhiteSpace(dto.UsernameOrEmail) || string.IsNullOrEmpty(dto.Password))
+            {
+                return BadRequest(new { message = "Kullanıcı adı/e-posta ve şifre zorunludur." });
+            }
+
             var token = await _authService.LoginAsync(dto);
             if (token == null)
             {
